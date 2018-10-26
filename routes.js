@@ -66,9 +66,11 @@ router.get('/transaction', async (req, res) => {
 
 router.get('/files', async (req, res) => {
     try {
-        const resp = await SavingContract.allEvents({ fromBlock: 0, toBlock: 'latest' });//.methods.getHash()
+        //bring in user's metamask account address
+        const accounts = await web3.eth.getAccounts();
+        const resp = await SavingContract.methods.getFile('testo')//.methods.getHash()
         // .send({
-        //     from: '0xb1caf625d9d29421dfd8dae4a7a9083b4175f80a'
+        //     from: accounts[0]
         // });
         console.log('reps', resp);
         res.send(resp);
@@ -82,9 +84,10 @@ router.post('/files', async (req, res) => {
     try {
         //bring in user's metamask account address
         const accounts = await web3.eth.getAccounts();
-        const resp = await SavingContract.methods.sendHash('QmdsR2tPaBZZQGT6JyutvZPzmGmQdaZ4a1cKwUV4LJ7R3c').send({
-            from: accounts[0]
-        });
+        const resp = await SavingContract.methods.insertFile('0x70e5044cE689132d8ECf6EE3433AF796F8E46575', 'testo')
+            .send({
+                from: accounts[0]
+            });
         console.log('reps', resp);
         res.send(resp);
     }
@@ -165,8 +168,6 @@ router.get('/getfile/:hash', async (req, res) => {
     try {
         const files = await ipfs.files.get(validCID);
         files.forEach((file) => {
-            console.log(file)
-            // console.log(file.content.toString('utf8'))
             res.send(file)
 
         })
