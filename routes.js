@@ -50,9 +50,23 @@ router.get('/accounts', async (req, res) => {
     }
 });
 
+
+router.get('/transaction', async (req, res) => {
+    try {
+        //bring in user's metamask account address
+        const accounts = await web3.eth.getAccounts();
+        console.log('accounts', accounts)
+        const resp = await web3.eth.getTransactionReceipt('0x1cc752c0683b5f9b85c1ef60ba207503cee7c2444114d60502d34cb2d0c320e3');
+        res.send(resp);
+    }
+    catch (err) {
+        res.status(500).send(err.message);
+    }
+})
+
 router.get('/files', async (req, res) => {
     try {
-        const resp = await SavingContract.methods.getHash()
+        const resp = await SavingContract.allEvents({ fromBlock: 0, toBlock: 'latest' });//.methods.getHash()
         // .send({
         //     from: '0xb1caf625d9d29421dfd8dae4a7a9083b4175f80a'
         // });
@@ -66,8 +80,10 @@ router.get('/files', async (req, res) => {
 
 router.post('/files', async (req, res) => {
     try {
+        //bring in user's metamask account address
+        const accounts = await web3.eth.getAccounts();
         const resp = await SavingContract.methods.sendHash('QmdsR2tPaBZZQGT6JyutvZPzmGmQdaZ4a1cKwUV4LJ7R3c').send({
-            from: '0xb1caf625d9d29421dfd8dae4a7a9083b4175f80a'
+            from: accounts[0]
         });
         console.log('reps', resp);
         res.send(resp);
@@ -137,6 +153,28 @@ router.post('/upload', upload.single('file'), (req, res) => {
                 }
             )
         })
+});
+
+
+//Getting the uploaded file via hash code.
+router.get('/getfile/:hash', async (req, res) => {
+
+    //This hash is returned hash of addFile router.
+    const validCID = req.params.hash
+
+    try {
+        const files = await ipfs.files.get(validCID);
+        files.forEach((file) => {
+            console.log(file)
+            // console.log(file.content.toString('utf8'))
+            res.send(file)
+
+        })
+    }
+    catch (err) {
+        res.status(500).send(err.message);
+    }
 })
+
 
 module.exports = router;
