@@ -6,9 +6,13 @@ const multer = require('multer');
 const fs = require('fs');
 const Web3 = require('web3');
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const code = fs.readFileSync('./contracts/StoreHash.sol').toString();
+const solc = require('solc');
+const compiledCode = solc.compile(code);
+const abi = JSON.parse(compiledCode.contracts[':SaveFile'].interface);
+// console.log('abi', abi)
+const SavingContract = new web3.eth.Contract(abi, '0xb1caf625d9d29421dfd8dae4a7a9083b4175f80a');
 
-
-// console.log('web3', web3);
 
 const MAX_SIZE = 52428800;
 
@@ -35,7 +39,48 @@ router.get('/test', (req, res) => {
     res.send(' Up and running');
 });
 
-router.get('/status', async (req, res, next) => {
+
+router.get('/accounts', async (req, res) => {
+    try {
+        const accounts = await web3.eth.getAccounts();
+        res.send(accounts);
+    }
+    catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+router.get('/files', async (req, res) => {
+    try {
+        const resp = await SavingContract.methods.getHash()
+        // .send({
+        //     from: '0xb1caf625d9d29421dfd8dae4a7a9083b4175f80a'
+        // });
+        console.log('reps', resp);
+        res.send(resp);
+    }
+    catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+router.post('/files', async (req, res) => {
+    try {
+        const resp = await SavingContract.methods.sendHash('QmdsR2tPaBZZQGT6JyutvZPzmGmQdaZ4a1cKwUV4LJ7R3c').send({
+            from: '0xb1caf625d9d29421dfd8dae4a7a9083b4175f80a'
+        });
+        console.log('reps', resp);
+        res.send(resp);
+    }
+    catch (err) {
+        res.status(500).send(err.message);
+    }
+})
+
+
+
+
+router.get('/status', async (req, res) => {
     try {
         const resp = await web3.eth.net.isListening();
         res.send({ "status": resp ? 200 : 400 });
@@ -45,6 +90,8 @@ router.get('/status', async (req, res, next) => {
         res.status(500).send(err.message)
     }
 });
+
+
 
 
 /*  upload POST endpoint */
