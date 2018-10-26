@@ -10,8 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "ethereumjs-testrpc": "^6.0.3",
     "express": "^4.16.4",
     "ipfs-api": "^25.0.0",
-    "multer": "^1.4.1"
+    "multer": "^1.4.1",
+    "web3": "^1.0.0-beta.36"
   }
 }

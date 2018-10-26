@@ -4,6 +4,11 @@ const ipfsAPI = require('ipfs-api');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const Web3 = require('web3');
+const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+
+
+// console.log('web3', web3);
 
 const MAX_SIZE = 52428800;
 
@@ -23,9 +28,24 @@ const ipfs = ipfsAPI('localhost', '5001', { protocol: 'http' })
 
 
 
+// const ipfs = new IPFS({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
+
+
 router.get('/test', (req, res) => {
-    res.send(' up amd running');
+    res.send(' Up and running');
 });
+
+router.get('/status', async (req, res, next) => {
+    try {
+        const resp = await web3.eth.net.isListening();
+        res.send({ "status": resp ? 200 : 400 });
+    }
+    catch (err) {
+        console.log(err);
+        res.status(500).send(err.message)
+    }
+});
+
 
 /*  upload POST endpoint */
 router.post('/upload', upload.single('file'), (req, res) => {
