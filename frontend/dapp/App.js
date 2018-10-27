@@ -7,7 +7,7 @@
  */
 
 import React, { Component } from 'react';
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View, PixelRatio, Image } from 'react-native';
 import ImagePicker from 'react-native-image-picker';
 
 import Spinner from './components/Spinner';
@@ -29,11 +29,14 @@ const options = {
 
 type Props = {};
 export default class App extends Component<Props> {
+  state = {
+    avatarSource: null,
+    loading: true,
+  };
 
   selectImage = async () => {
 
-    ImagePicker.showImagePicker(options, async (response) => {
-      console.log('resp', response);
+    ImagePicker.showImagePicker(options, (response) => {
       if (response.didCancel) {
         this.setState({ error: 'Image upload failed' });
       } else if (response.error) {
@@ -46,7 +49,7 @@ export default class App extends Component<Props> {
           avatarSource: source,
         });
         const data = new FormData();
-        data.append('upload', {
+        data.append('file', {
           uri: response.uri,
           type: response.type,
           name: response.fileName,
@@ -62,35 +65,44 @@ export default class App extends Component<Props> {
           body: data,
         };
 
-
-        // fetch('https://l/api/upload', config);
-        // .then(resp => ({
-        //   resp.json();
-        // }))
-        // .catch(error => this.setState({ error }));
-        try {
-          const resp = await fetch('/upload', config);
-          console.log('resp', resp.json());
-        }
-        catch (err) {
-          console.log('err', err.message)
-        }
-
+        fetch('https://dappsela.herokuapp.com/upload', config)
+          .then((resp) => resp.json())
+          .then((res) => {
+            console.log('resp', res);
+            this.setState({
+              hash: res.hash,
+              address: `https://gateway.ipfs.io/ipfs/${res.hash}`,
+              loading: false
+            })
+          })
+          .catch((err) => {
+            console.log('err', err.message)
+          })
 
       }
-    });
-  };
+    })
+  }
   render() {
     return (
       <View style={styles.container}>
         <View>
           <TouchableOpacity onPress={() => this.selectImage()}>
-            <Text> Choose image </Text>
+            <View style={[styles.avatar, styles.avatarContainer, { marginBottom: 20 }]}>
+              {this.state.avatarSource === null ? <Text>Select a Photo</Text> :
+                <Image style={styles.avatar} source={this.state.avatarSource} />
+              }
+            </View>
           </TouchableOpacity>
-        </View>
-        <Text style={styles.welcome}>Welcome to React Native!</Text>
-        <Text style={styles.instructions}>To get started, edit App.js</Text>
-        <Text style={styles.instructions}>{instructions}</Text>
+        </View>{
+          !!loading ? (
+            <View style={{ backgroundColor: 'red' }}>
+              <Text> file hash: {this.state.hash} </Text>
+              <Text> Address on IPFS {this.state.address} </Text>
+              {/* <Text> file hash: {this.state.name} </Text> */}
+            </View>
+          ) : null
+        }
+
       </View>
     );
   }
@@ -103,14 +115,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
   },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
+  avatarContainer: {
+    borderColor: '#9B9B9B',
+    borderWidth: 1 / PixelRatio.get(),
+    justifyContent: 'center',
+    alignItems: 'center'
   },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
+  avatar: {
+    borderRadius: 75,
+    width: 150,
+    height: 150
+  }
 });
