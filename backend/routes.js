@@ -126,6 +126,7 @@ router.get('/status', async (req, res) => {
 
 /*  upload POST endpoint */
 router.post('/upload', upload.single('file'), (req, res) => {
+    consol.log('file', req)
     if (!req.file) {
         return res.status(422).json({
             error: 'File needs to be provided.',
