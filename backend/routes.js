@@ -28,12 +28,10 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // connect to ipfs daemon API server
-const ipfs = ipfsAPI('localhost', '5001', { protocol: 'http' })
+// const ipfs = ipfsAPI('localhost', '5001', { protocol: 'http' })
 
-
-
-// const ipfs = new IPFS({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
-
+// const ipfs = new ipfsAPI({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
+//https://gateway.ipfs.io/ipfs/:hash
 
 router.get('/test', (req, res) => {
     res.send(' Up and running');
@@ -66,14 +64,27 @@ router.get('/transaction', async (req, res) => {
 
 router.get('/files', async (req, res) => {
     try {
+
+
+        SavingContract.FileEvent({}, { fromBlock: 0, toBlock: 'latest' }).get((error, eventResult) => {
+            if (error) {
+                console.log('Error in myEvent event handler: ' + error);
+            }
+
+            else {
+                res.send('djdj')
+                console.log('myEvent: ' + JSON.stringify(eventResult.args));
+            }
+
+        })
         //bring in user's metamask account address
-        const accounts = await web3.eth.getAccounts();
-        const resp = await SavingContract.methods.getFile('testo')//.methods.getHash()
-        // .send({
-        //     from: accounts[0]
-        // });
-        console.log('reps', resp);
-        res.send(resp);
+        // const accounts = await web3.eth.getAccounts();
+        // const resp = await SavingContract.methods.getFile('testo')//.methods.getHash()
+        // // .send({
+        // //     from: accounts[0]
+        // // });
+        // console.log('reps', resp);
+        // res.send(resp);
     }
     catch (err) {
         res.status(500).send(err.message);
@@ -138,10 +149,15 @@ router.post('/upload', upload.single('file'), (req, res) => {
             error: `Image needs to be smaller than ${MAX_SIZE} bytes.`,
         });
     }
+    // const data = new Object;
 
     const data = fs.readFileSync(req.file.path);
+    // data.name = req.file.originalname;
+
+    console.log('req.file', data);
     return ipfs.add(data)
         .then((file) => {
+            console.log('fileni', file)
             if (file) {
                 return res.send({
                     hash: file[0].hash,

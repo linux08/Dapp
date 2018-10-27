@@ -1,5 +1,7 @@
 .env
 .vscode/
 .tmp/
-/node_modules
-/package-lock.json
+./backend/node_modules
+./backend/package-lock.json
+./frontend/dapp/node_modules
+./frontend/dapp/package-lock.json
