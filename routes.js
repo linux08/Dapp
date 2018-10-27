@@ -95,6 +95,7 @@ router.post('/files', async (req, res) => {
     try {
         //bring in user's metamask account address
         const accounts = await web3.eth.getAccounts();
+        console.log('accounts', accounts);
         const resp = await SavingContract.methods.insertFile('0x70e5044cE689132d8ECf6EE3433AF796F8E46575', 'testo')
             .send({
                 from: accounts[0]
