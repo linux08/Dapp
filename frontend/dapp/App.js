@@ -7,7 +7,7 @@
  */
 
 import React, { Component } from 'react';
-import { Platform, StyleSheet, Text, TouchableOpacity, View, PixelRatio, Image } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View, PixelRatio, Image, Linking } from 'react-native';
 import ImagePicker from 'react-native-image-picker';
 
 import Spinner from './components/Spinner';
@@ -86,6 +86,9 @@ export default class App extends Component<Props> {
     return (
       <View style={styles.container}>
         <View>
+          <Text style={{ color: 'blue' }}>  DAPP file system using ethereum and IPFS </Text>
+        </View>
+        <View style={{ marginTop: '10%' }}>
           <TouchableOpacity onPress={() => this.selectImage()}>
             <View style={[styles.avatar, styles.avatarContainer, { marginBottom: 20 }]}>
               {this.state.avatarSource === null ? <Text>Select a Photo</Text> :
@@ -94,10 +97,15 @@ export default class App extends Component<Props> {
             </View>
           </TouchableOpacity>
         </View>{
-          !!loading ? (
-            <View style={{ backgroundColor: 'red' }}>
-              <Text> file hash: {this.state.hash} </Text>
-              <Text> Address on IPFS {this.state.address} </Text>
+          !!this.state.loading ? (
+            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+              <View>
+                <Text> file hash:QmbpfjVngsyp9oXuTV3HrRhgPmQ5cxRryjksopUxFPSYzy {this.state.hash} </Text>
+              </View>
+              <View style={{ marginTop: 4, }}>
+                <Text>  Address on IPFS : </Text>
+                <Text style={{ color: 'blue', textDecorationLine: 'underline' }} onPress={() => Linking.openURL(this.state.address)}> https://gateway.ipfs.io/ipfs/QmbpfjVngsyp9oXuTV3HrRhgPmQ5cxRryjksopUxFPSYzy,{this.state.address} </Text>
+              </View>
               {/* <Text> file hash: {this.state.name} </Text> */}
             </View>
           ) : null
@@ -111,7 +119,8 @@ export default class App extends Component<Props> {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    // justifyContent: 'center',
+    marginTop: '40%',
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
   },
