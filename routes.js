@@ -30,10 +30,10 @@ const upload = multer({ storage });
 // connect to ipfs daemon API server
 // const ipfs = ipfsAPI('localhost', '5001', { protocol: 'http' })
 
-// const ipfs = new ipfsAPI({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
+const ipfs = new ipfsAPI({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
 //https://gateway.ipfs.io/ipfs/:hash
 
-router.get('/test', (req, res) => {
+router.get('/', (req, res) => {
     res.send(' Up and running');
 });
 
@@ -126,7 +126,7 @@ router.get('/status', async (req, res) => {
 
 /*  upload POST endpoint */
 router.post('/upload', upload.single('file'), (req, res) => {
-    consol.log('file', req)
+    consol.log('file upload')
     if (!req.file) {
         return res.status(422).json({
             error: 'File needs to be provided.',
