@@ -7,17 +7,11 @@
  */
 
 import React, { Component } from 'react';
-import { Platform, StyleSheet, Text, TouchableOpacity, View, PixelRatio, Image, Linking } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, PixelRatio, Image, Linking, Dimensions, TextInput } from 'react-native';
 import ImagePicker from 'react-native-image-picker';
 
 import Spinner from './components/Spinner';
-
-const instructions = Platform.select({
-  ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
-  android:
-    'Double tap R on your keyboard to reload,\n' +
-    'Shake or press menu button for dev menu',
-});
+import TextContainer from './components/TextContainer';
 
 const options = {
   title: 'Select Avatar',
@@ -27,22 +21,35 @@ const options = {
   },
 };
 
-type Props = {};
-export default class App extends Component<Props> {
-  state = {
-    avatarSource: null,
-    loading: true,
-  };
+const { height, width } = Dimensions.get('window');
+
+export default class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      avatarSource: null,
+      loading: null,
+    };
+  }
+
+
 
   selectImage = async () => {
+    console.log('this.state', this.state)
+    this.setState({
+      loading: null
+    });
 
     ImagePicker.showImagePicker(options, (response) => {
+      this.setState({
+        loading: true
+      });
       if (response.didCancel) {
-        this.setState({ error: 'Image upload failed' });
+        this.setState({ error: 'Image upload failed', loading: null });
       } else if (response.error) {
-        this.setState({ error: 'Image upload failed' });
+        this.setState({ error: 'Image upload failed', loading: null });
       } else if (response.customButton) {
-        this.setState({ error: 'Image upload failed' });
+        this.setState({ error: 'Image upload failed', loading: null });
       } else {
         const source = { uri: response.uri };
         this.setState({
@@ -65,17 +72,22 @@ export default class App extends Component<Props> {
           body: data,
         };
 
-        fetch('https://dappsela.herokuapp.com/upload', config)
+        fetch('http://10.0.2.2:5000/upload', config)
           .then((resp) => resp.json())
           .then((res) => {
             console.log('resp', res);
             this.setState({
-              hash: res.hash,
-              address: `https://gateway.ipfs.io/ipfs/${res.hash}`,
+              hash: res.ipfsHash,
+              address: `https://gateway.ipfs.io/ipfs/${res.ipfsHash}`,
+              transactionHash: res.transactionHash,
+              blockHash: res.blockHash,
               loading: false
             })
           })
           .catch((err) => {
+            this.setState({
+              loading: true
+            });
             console.log('err', err.message)
           })
 
@@ -85,32 +97,61 @@ export default class App extends Component<Props> {
   render() {
     return (
       <View style={styles.container}>
-        <View>
-          <Text style={{ color: 'blue' }}>  DAPP file system using ethereum and IPFS </Text>
-        </View>
-        <View style={{ marginTop: '10%' }}>
-          <TouchableOpacity onPress={() => this.selectImage()}>
-            <View style={[styles.avatar, styles.avatarContainer, { marginBottom: 20 }]}>
-              {this.state.avatarSource === null ? <Text>Select a Photo</Text> :
-                <Image style={styles.avatar} source={this.state.avatarSource} />
-              }
+        <View style={{ alignItems: 'center' }}>
+          <View>
+            <Text style={{ color: 'blue' }}>  DAPP file system using ethereum and IPFS </Text>
+          </View>
+          <View style={{ marginTop: '10%' }}>
+            <TouchableOpacity onPress={() => this.selectImage()}>
+              <View style={[styles.avatar, styles.avatarContainer, { marginBottom: 20 }]}>
+                {this.state.avatarSource === null ? <Text>Select a Photo</Text> :
+                  <Image style={styles.avatar} source={this.state.avatarSource} />
+                }
+              </View>
+            </TouchableOpacity>
+
+            <View style={{ alignItems: 'center' }}>
+              <TextInput
+                placeholder="Label"
+                onChange={(label) => this.setState({ label })}
+                style={styles.label}
+                underlineColorAndroid="transparent"
+              />
             </View>
-          </TouchableOpacity>
+          </View>
         </View>{
-          !!this.state.loading ? (
-            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-              <View>
-                <Text> file hash:QmbpfjVngsyp9oXuTV3HrRhgPmQ5cxRryjksopUxFPSYzy {this.state.hash} </Text>
-              </View>
-              <View style={{ marginTop: 4, }}>
-                <Text>  Address on IPFS : </Text>
-                <Text style={{ color: 'blue', textDecorationLine: 'underline' }} onPress={() => Linking.openURL(this.state.address)}> https://gateway.ipfs.io/ipfs/QmbpfjVngsyp9oXuTV3HrRhgPmQ5cxRryjksopUxFPSYzy,{this.state.address} </Text>
-              </View>
-              {/* <Text> file hash: {this.state.name} </Text> */}
-            </View>
+          this.state.loading !== null ? (
+            this.state.loading ? (
+              <Spinner size="large" />
+            ) : (
+                <View>
+
+                  <TextContainer
+                    first="Hash"
+                    second={this.state.hash}
+                  />
+
+                  <TextContainer
+                    first="Address on IPFS"
+                    second={this.state.address}
+                    link={() => Linking.openURL(this.state.address)}
+                    style={{ color: 'blue', textDecorationLine: 'underline' }}
+                  />
+
+                  <TextContainer
+                    first="Transaction Hash"
+                    second={this.state.transactionHash}
+                  />
+
+                  <TextContainer
+                    first="Block Hash"
+                    second={this.state.blockHash}
+                  />
+
+                </View>
+              )
           ) : null
         }
-
       </View>
     );
   }
@@ -119,9 +160,7 @@ export default class App extends Component<Props> {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // justifyContent: 'center',
-    marginTop: '40%',
-    alignItems: 'center',
+    marginTop: '30%',
     backgroundColor: '#F5FCFF',
   },
   avatarContainer: {
@@ -131,8 +170,19 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   avatar: {
-    borderRadius: 75,
-    width: 150,
-    height: 150
+    borderRadius: width / 3,
+    width: width / 2,
+    height: width / 2
+  },
+  label: {
+    height: 40,
+    width: width / 4,
+    paddingLeft: '8%',
+    borderWidth: 1,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
   }
+
 });
