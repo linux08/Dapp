@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon index",
     "test": "npm test",
-    "start": "node index"
+    "start": "node index",
+    "lint": "eslint --fix"
   },
   "author": "",
   "license": "ISC",
@@ -20,6 +21,9 @@
     "web3": "^1.0.0-beta.36"
   },
   "devDependencies": {
+    "eslint": "^5.8.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0",
     "nodemon": "^1.18.5"
   }
 }

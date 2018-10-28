@@ -1,37 +1,17 @@
 pragma solidity ^0.4.0;
 
-contract SaveFile {
-   
-    // string name ;
-    struct file{
-        string name;
-        string ipfsHash;
+contract SaveAddress {
+    string ipfsHash;
+    struct hash {
+        string x;
     }
-    file[] public files; 
-    uint256 public totalFile;
-
-    event FileEvent(string name , string ipfsHash);
-
-    constructor() public {
-        totalFile = 0;
+    hash[] public hashes;
+    mapping (uint => hash) hashs;
+ 
+    function saveHash(string x) public {
+        ipfsHash = x;
     }
-
-    function insertFile(string ipfsHash, string name) public returns (uint256 total){ 
-        // ipfsHash = x;
-        file memory newFile = file(ipfsHash , name);
-        files.push(newFile);
-        totalFile++;
-        //emit event
-        emit FileEvent (ipfsHash, name);
-        return total;
+    function getHash( string y) public view returns ( string x) {
+        return ipfsHash;
     }
-
-    function getFile(string fileName) public view returns (string ipfsHash, string name) {
-              for(uint256 i = 0;i<totalFile; i++){
-              return (files[i].name ,files[i].ipfsHash);
-        }
-        revert("file not found");
-    }
-      
-    // }
-}
+}       
