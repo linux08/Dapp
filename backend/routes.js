@@ -1,16 +1,17 @@
 const express = require('express');
+
 const router = express.Router();
 const ipfsAPI = require('ipfs-api');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 const Web3 = require('web3');
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 const code = fs.readFileSync('./contracts/StoreHash.sol').toString();
 const solc = require('solc');
+
 const compiledCode = solc.compile(code);
-const abi = JSON.parse(compiledCode.contracts[':SaveFile'].interface);
-// console.log('abi', abi)
+const abi = JSON.parse(compiledCode.contracts[':SaveAddress'].interface);
 const SavingContract = new web3.eth.Contract(abi, '0xb1caf625d9d29421dfd8dae4a7a9083b4175f80a');
 
 
@@ -30,103 +31,80 @@ const upload = multer({ storage });
 // connect to ipfs daemon API server
 // const ipfs = ipfsAPI('localhost', '5001', { protocol: 'http' })
 
-// const ipfs = new ipfsAPI({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
-//https://gateway.ipfs.io/ipfs/:hash
+const ipfs = new ipfsAPI({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
+// https://gateway.ipfs.io/ipfs/:hash
 
-router.get('/test', (req, res) => {
+
+const test = (req, res) => {
     res.send(' Up and running');
-});
+};
 
-
-router.get('/accounts', async (req, res) => {
+const accounts = async (req, res) => {
     try {
         const accounts = await web3.eth.getAccounts();
         res.send(accounts);
-    }
-    catch (err) {
+    } catch (err) {
         res.status(500).send(err.message);
     }
-});
-
-
-router.get('/transaction', async (req, res) => {
+};
+const transaction = async (req, res) => {
     try {
-        //bring in user's metamask account address
+        // bring in user's metamask account address
         const accounts = await web3.eth.getAccounts();
-        console.log('accounts', accounts)
         const resp = await web3.eth.getTransactionReceipt('0x1cc752c0683b5f9b85c1ef60ba207503cee7c2444114d60502d34cb2d0c320e3');
         res.send(resp);
-    }
-    catch (err) {
+    } catch (err) {
         res.status(500).send(err.message);
     }
-})
+};
 
-router.get('/files', async (req, res) => {
-    try {
-
-
-        SavingContract.FileEvent({}, { fromBlock: 0, toBlock: 'latest' }).get((error, eventResult) => {
-            if (error) {
-                console.log('Error in myEvent event handler: ' + error);
-            }
-
-            else {
-                res.send('djdj')
-                console.log('myEvent: ' + JSON.stringify(eventResult.args));
-            }
-
-        })
-        //bring in user's metamask account address
-        // const accounts = await web3.eth.getAccounts();
-        // const resp = await SavingContract.methods.getFile('testo')//.methods.getHash()
-        // // .send({
-        // //     from: accounts[0]
-        // // });
-        // console.log('reps', resp);
-        // res.send(resp);
+const getData = async (req, res) => {
+    if (!req.params.name) {
+        return res.status(422).json({
+            error: 'name needs to be provided.',
+        });
     }
-    catch (err) {
-        res.status(500).send(err.message);
-    }
-});
-
-router.post('/files', async (req, res) => {
+    const accounts = await web3.eth.getAccounts();
+    const ethAddress = await SavingContract.options.address;
     try {
-        //bring in user's metamask account address
-        const accounts = await web3.eth.getAccounts();
-        const resp = await SavingContract.methods.insertFile('0x70e5044cE689132d8ECf6EE3433AF796F8E46575', 'testo')
+        const resp = await SavingContract.methods.getHash(req.params.name)
             .send({
-                from: accounts[0]
+                from: accounts[0],
             });
-        console.log('reps', resp);
+
         res.send(resp);
-    }
-    catch (err) {
+    } catch (err) {
         res.status(500).send(err.message);
     }
-})
+};
+const postData = async (req, res) => {
+    try {
 
+        const { hash } = req.data[0];
+        const ethAddress = await SavingContract.options.address;
+        const accounts = await web3.eth.getAccounts();
 
+        const resp = await SavingContract.methods.saveHash(hash)
+            .send({
+                from: accounts[0],
+            });
+        const data = Object.assign({ ipfsHash: hash }, resp);
+        res.send(data);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+};
 
-
-router.get('/status', async (req, res) => {
+const webStatus = async (req, res) => {
     try {
         const resp = await web3.eth.net.isListening();
-        res.send({ "status": resp ? 200 : 400 });
+        res.send({ status: resp ? 200 : 400 });
+    } catch (err) {
+        res.status(500).send(err.message);
     }
-    catch (err) {
-        console.log(err);
-        res.status(500).send(err.message)
-    }
-});
+};
 
-
-
-
-/*  upload POST endpoint */
-router.post('/upload', upload.single('file'), (req, res) => {
-    consol.log('file', req)
+const uploadFile = async (req, res, next) => {
     if (!req.file) {
         return res.status(422).json({
             error: 'File needs to be provided.',
@@ -150,49 +128,46 @@ router.post('/upload', upload.single('file'), (req, res) => {
             error: `Image needs to be smaller than ${MAX_SIZE} bytes.`,
         });
     }
-    // const data = new Object;
 
     const data = fs.readFileSync(req.file.path);
-    // data.name = req.file.originalname;
-
-    console.log('req.file', data);
+    data.name = 'sam';
     return ipfs.add(data)
         .then((file) => {
-            console.log('fileni', file)
             if (file) {
-                return res.send({
-                    hash: file[0].hash,
-                });
+                req.data = file;
+                next();
+            } else {
+                res.status(400).send('Error processing file');
             }
         })
         .catch((err) => {
-            console.log('err', err)
-            res.status(500).send(
-                {
-                    error: err.message,
-                }
-            )
-        })
-});
+            res.status(500).send(err.message);
+        });
+};
 
-
-//Getting the uploaded file via hash code.
-router.get('/getfile/:hash', async (req, res) => {
-
-    //This hash is returned hash of addFile router.
-    const validCID = req.params.hash
+const getFile = async (req, res) => {
+    // This hash is returned hash of addFile router.
+    const validCID = req.params.hash;
 
     try {
         const files = await ipfs.files.get(validCID);
         files.forEach((file) => {
-            res.send(file)
-
-        })
-    }
-    catch (err) {
+            res.send(file);
+        });
+    } catch (err) {
         res.status(500).send(err.message);
     }
-})
+};
 
+router.get('/', test);
+router.get('/accounts', accounts);
+router.get('/web3-status', webStatus);
+// router.get('/transcations', transaction);
+router.get('/files/:name', getData);
+
+/*  upload POST endpoint */
+router.post('/upload', upload.single('file'), uploadFile, postData);
+
+router.get('/getfile/:hash', getFile);
 
 module.exports = router;
