@@ -6,14 +6,12 @@ const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 const Web3 = require('web3');
-
 const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 const code = fs.readFileSync('./contracts/StoreHash.sol').toString();
 const solc = require('solc');
 
 const compiledCode = solc.compile(code);
 const abi = JSON.parse(compiledCode.contracts[':SaveAddress'].interface);
-
 const SavingContract = new web3.eth.Contract(abi, '0xb1caf625d9d29421dfd8dae4a7a9083b4175f80a');
 
 
@@ -53,7 +51,6 @@ const transaction = async (req, res) => {
   try {
     // bring in user's metamask account address
     const accounts = await web3.eth.getAccounts();
-    console.log('accounts', accounts);
     const resp = await web3.eth.getTransactionReceipt('0x1cc752c0683b5f9b85c1ef60ba207503cee7c2444114d60502d34cb2d0c320e3');
     res.send(resp);
   } catch (err) {
@@ -74,6 +71,7 @@ const getData = async (req, res) => {
       .send({
         from: accounts[0],
       });
+
     res.send(resp);
   } catch (err) {
     res.status(500).send(err.message);
@@ -81,7 +79,8 @@ const getData = async (req, res) => {
 };
 const postData = async (req, res) => {
   try {
-    const hash = req.data[0].hash;
+
+    const { hash } = req.data[0];
     const ethAddress = await SavingContract.options.address;
     const accounts = await web3.eth.getAccounts();
 
@@ -89,11 +88,9 @@ const postData = async (req, res) => {
       .send({
         from: accounts[0],
       });
-    const data = Object.assign({ ipfsHash: req.data[0].hash }, resp);
-
+    const data = Object.assign({ ipfsHash: hash }, resp);
     res.send(data);
   } catch (err) {
-    console.log('err', err.message);
     res.status(500).send(err.message);
   }
 };
@@ -103,7 +100,6 @@ const webStatus = async (req, res) => {
     const resp = await web3.eth.net.isListening();
     res.send({ status: resp ? 200 : 400 });
   } catch (err) {
-    console.log(err);
     res.status(500).send(err.message);
   }
 };
@@ -134,6 +130,7 @@ const uploadFile = async (req, res, next) => {
   }
 
   const data = fs.readFileSync(req.file.path);
+  data.name ='sam';
   return ipfs.add(data)
     .then((file) => {
       if (file) {
