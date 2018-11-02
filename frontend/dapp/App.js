@@ -35,15 +35,9 @@ export default class App extends Component {
 
 
   selectImage = async () => {
-    console.log('this.state', this.state)
-    this.setState({
-      loading: null
-    });
 
     ImagePicker.showImagePicker(options, (response) => {
-      this.setState({
-        loading: true
-      });
+    
       if (response.didCancel) {
         this.setState({ error: 'Image upload failed', loading: null });
       } else if (response.error) {
@@ -54,13 +48,31 @@ export default class App extends Component {
         const source = { uri: response.uri };
         this.setState({
           avatarSource: source,
-        });
-        const data = new FormData();
-        data.append('file', {
           uri: response.uri,
           type: response.type,
-          name: response.fileName,
-          originalname: response.fileName,
+          name : response.fileName,
+          originalName: response.fileName
+        });
+       
+
+      }
+    })
+  }
+
+  upload = async () => {
+      this.setState({
+        loading: true
+      });
+      console.log('this.state', this.state);
+     const data = new FormData();
+        data.append('file', {
+          uri: this.state.uri,
+          type: this.state.type,
+          name: this.state.fileName,
+          originalname: this.state.fileName,
+        });
+        data.append('label', {
+          label: this.state.label
         });
 
         const config = {
@@ -86,13 +98,11 @@ export default class App extends Component {
           })
           .catch((err) => {
             this.setState({
-              loading: true
+              loading:false,
+              error: err.message
             });
             console.log('err', err.message)
           })
-
-      }
-    })
   }
   render() {
     return (
@@ -113,10 +123,16 @@ export default class App extends Component {
             <View style={{ alignItems: 'center' }}>
               <TextInput
                 placeholder="Label"
-                onChange={(label) => this.setState({ label })}
+                onChangeText={(label) => this.setState({ label })}
                 style={styles.label}
                 underlineColorAndroid="transparent"
               />
+            </View>
+
+            <View style={{ alignItems: 'center', marginTop: '10%' }}>
+              <TouchableOpacity  onPress ={() => this.upload() }style ={[styles.label, { justifyContent: 'center', backgroundColor: '#8470ff'}]}>
+                <Text style ={{ fontWeight: 'bold'}}>  UPLOAD </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>{
