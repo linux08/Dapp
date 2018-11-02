@@ -8,6 +8,9 @@ const imageSchema = mongoose.Schema({
   ipfsHash: {
     type: String,
   },
+  ipfsAddress: {
+    type: String,
+  },
   transactionHash: {
     type: String,
   },

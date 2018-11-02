@@ -47,7 +47,6 @@ exports.accounts = async (req, res) => {
 exports.transaction = async (req, res) => {
   try {
     // bring in user's metamask account address
-    const accounts = await web3.eth.getAccounts();
     const resp = await web3.eth.getTransactionReceipt('0x1cc752c0683b5f9b85c1ef60ba207503cee7c2444114d60502d34cb2d0c320e3');
     res.send(resp);
   } catch (err) {
@@ -74,7 +73,7 @@ exports.getData = async (req, res) => {
   }
 };
 
-exports.postData = async (req, res) => {
+exports.postData = async (req, res, next) => {
   try {
     const { hash } = req.data[0];
     const accounts = await web3.eth.getAccounts();
@@ -84,7 +83,8 @@ exports.postData = async (req, res) => {
         from: accounts[0],
       });
     const data = Object.assign({ ipfsHash: hash }, resp);
-    res.send(data);
+    req.data = data;
+    next();
   } catch (err) {
     res.status(500).send(err.message);
   }
@@ -125,7 +125,6 @@ exports.uploadFile = async (req, res, next) => {
   }
 
   const data = fs.readFileSync(req.file.path);
-  // data.name ='sam';
   return ipfs.add(data)
     .then((file) => {
       if (file) {
@@ -171,10 +170,16 @@ exports.all = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const resp = await Image.create(req.body);
+    const data = {
+      label: req.body.label,
+      ipfsHash: req.data.ipfsHash,
+      ipfsAddress: `https://gateway.ipfs.io/ipfs/${req.data.ipfsHash}`,
+      transactionHash: req.data.ipfsHash,
+      blockHash: req.data.blockHash,
+    };
+    const resp = await Image.create(data);
     res.send(resp);
   } catch (err) {
-    winston.error(err.message);
     res.status(500).send(err.message);
   }
 };
@@ -186,12 +191,11 @@ exports.findById = async (req, res) => {
   try {
     const resp = await Image.findOne({ _id: req.params.id });
     if (resp === null) {
-      res.status(404).send('User not found');
+      res.status(404).send('Image not found');
     } else {
       res.send(resp);
     }
   } catch (err) {
-    winston.error(err.message);
     res.status(500).send(err.message);
   }
 };
