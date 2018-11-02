@@ -156,7 +156,6 @@ exports.getFile = async (req, res) => {
 
 
 exports.all = async (req, res) => {
-  const page = parseInt(req.query.page) || 0;
   const limit = parseInt(req.query.limit) || 10;
 
   try {
@@ -165,6 +164,51 @@ exports.all = async (req, res) => {
       .sort('updatedAt');
     res.send(resp);
   } catch (err) {
+    res.status(500).send(err.message);
+  }
+};
+
+
+exports.create = async (req, res) => {
+  try {
+    const resp = await Image.create(req.body);
+    res.send(resp);
+  } catch (err) {
+    winston.error(err.message);
+    res.status(500).send(err.message);
+  }
+};
+
+exports.findById = async (req, res) => {
+  if (!req.params.id) {
+    res.status(400).send('Please enter user id');
+  }
+  try {
+    const resp = await Image.findOne({ _id: req.params.id });
+    if (resp === null) {
+      res.status(404).send('User not found');
+    } else {
+      res.send(resp);
+    }
+  } catch (err) {
+    winston.error(err.message);
+    res.status(500).send(err.message);
+  }
+};
+
+exports.findByLabel = async (req, res) => {
+  if (!req.params.label) {
+    res.status(400).send('Please enter image label');
+  }
+  try {
+    const resp = await Image.findOne({ label: req.params.label });
+    if (resp === null) {
+      res.status(404).send('Image not found');
+    } else {
+      res.send(resp);
+    }
+  } catch (err) {
+    winston.error(err.message);
     res.status(500).send(err.message);
   }
 };

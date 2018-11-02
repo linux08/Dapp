@@ -11,7 +11,7 @@ const imageSchema = mongoose.Schema({
   timestamps: true,
 });
 
-imageSchema.index({ email: 1 });
+imageSchema.index({ label: 1 });
 
 
 module.exports = mongoose.model('Image', imageSchema);
