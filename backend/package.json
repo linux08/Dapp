@@ -6,20 +6,26 @@
   "scripts": {
     "dev": "nodemon index",
     "test": "npm test",
-    "start": "node index"
+    "start": "node index",
+    "lint": "eslint --fix"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ethereumjs-testrpc": "^6.0.3",
     "cors": "^2.8.4",
+    "dotenv": "^6.1.0",
+    "ethereumjs-testrpc": "^6.0.3",
     "express": "^4.16.4",
     "ipfs-api": "^25.0.0",
+    "mongoose": "^5.3.8",
     "multer": "^1.4.1",
     "solc": "^0.4.25",
     "web3": "^1.0.0-beta.36"
   },
   "devDependencies": {
+    "eslint": "^5.8.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0",
     "nodemon": "^1.18.5"
   }
 }

@@ -19,3 +19,8 @@ ipfs daemon
 ```
 
 Access your file at: https://gateway.ipfs.io/ipfs/your IPFS hash
+
+to get all available test account
+```
+node_modules/.bin/testrpc
+```
