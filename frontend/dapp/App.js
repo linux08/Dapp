@@ -9,6 +9,7 @@
 import React, { Component, Fragment } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, PixelRatio, Image, Linking, Dimensions, TextInput, ScrollView } from 'react-native';
 import ImagePicker from 'react-native-image-picker';
+import { Icon, Container, Header, Left, Button, Body, Title, Right } from 'native-base';
 
 import Spinner from './components/Spinner';
 import Card from './components/Card';
@@ -45,7 +46,6 @@ export default class App extends Component {
     fetch('http://10.0.2.2:5000/images', config)
       .then((resp) => resp.json())
       .then((res) => {
-        console.log('resp', res);
         this.setState({
           images: res,
           fetchLoading: false
@@ -126,14 +126,17 @@ export default class App extends Component {
     fetch('http://10.0.2.2:5000/upload', config)
       .then((resp) => resp.json())
       .then((res) => {
-
+        console.log('ththt', this.state.images.length);
+        let image = this.state.images.concat(res)
+        console.log('new', this.state.images.length);
         this.setState({
           label: res.label,
           hash: res.ipfsHash,
           address: res.ipfsAddress,
           transactionHash: res.transactionHash,
           blockHash: res.blockHash,
-          loading: false
+          loading: false,
+          image: this.state.images.concat(res)
         })
       })
       .catch((err) => {
@@ -144,83 +147,109 @@ export default class App extends Component {
       })
   }
 
-  newUploadScreen = () => (
-    <Fragment>
-      <View style={{ alignItems: 'center' }}>
-        <View>
-          <Text style={{ color: 'blue' }}>  DAPP file system using ethereum and IPFS </Text>
-        </View>
-        <View style={{ marginTop: '10%' }}>
-          <TouchableOpacity onPress={() => this.selectImage()}>
-            <View style={[styles.avatar, styles.avatarContainer, { marginBottom: 20 }]}>
-              {this.state.avatarSource === null ? <Text>Select a Photo</Text> :
-                <Image style={styles.avatar} source={this.state.avatarSource} />
-              }
-            </View>
-          </TouchableOpacity>
-
-          <View style={{ alignItems: 'center' }}>
-            <TextInput
-              placeholder="Label"
-              onChangeText={(label) => this.setState({ label })}
-              style={styles.label}
-              underlineColorAndroid="transparent"
-            />
+  newUploadScreen() {
+    return (
+      <View style={{ flex: 1, marginTop: 10 }}>
+        <View style={{ alignItems: 'center', flex: 1 }}>
+          <View>
+            <Text style={{ color: 'blue' }}>  DAPP file system using ethereum and IPFS </Text>
           </View>
-
-          <View style={{ alignItems: 'center', marginTop: '10%' }}>
-            <TouchableOpacity onPress={() => this.upload()} style={[styles.label, { justifyContent: 'center', backgroundColor: '#8470ff' }]}>
-              <Text style={{ fontWeight: 'bold' }}>  UPLOAD </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>{
-        this.state.loading !== null ? (
-          this.state.loading ? (
-            <Spinner size="large" />
-          ) : (
-              <View>
-
-                <TextContainer
-                  first="Label"
-                  second={this.state.label}
-                />
-
-                <TextContainer
-                  first="Hash"
-                  second={this.state.hash}
-                />
-
-                <TextContainer
-                  first="Address on IPFS"
-                  second={this.state.address}
-                  link={() => Linking.openURL(this.state.address)}
-                  style={{ color: 'blue', textDecorationLine: 'underline' }}
-                />
-
-                <TextContainer
-                  first="Transaction Hash"
-                  second={this.state.transactionHash}
-                />
-
-                <TextContainer
-                  first="Block Hash"
-                  second={this.state.blockHash}
-                />
-
+          <View style={{ marginTop: '10%', flex: 1 }}>
+            <TouchableOpacity onPress={() => this.selectImage()}>
+              <View style={[styles.avatar, styles.avatarContainer, { marginBottom: 20 }]}>
+                {this.state.avatarSource === null ? <Text>Select a Photo</Text> :
+                  <Image style={styles.avatar} source={this.state.avatarSource} />
+                }
               </View>
-            )
-        ) : null
-      }
-    </Fragment>
-  )
+            </TouchableOpacity>
 
+            <View style={{ alignItems: 'center' }}>
+              <TextInput
+                placeholder="Label"
+                onChangeText={(label) => this.setState({ label })}
+                style={styles.label}
+                underlineColorAndroid="transparent"
+              />
+            </View>
+
+            <View style={{ alignItems: 'center', marginTop: '10%' }}>
+              <TouchableOpacity onPress={() => this.upload()} style={[styles.label, { justifyContent: 'center', backgroundColor: '#8470ff' }]}>
+                <Text style={{ fontWeight: 'bold' }}>  UPLOAD </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>{
+          this.state.loading !== null ? (
+            this.state.loading ? (
+              <Spinner size="large" />
+            ) : (
+                <View>
+
+                  <TextContainer
+                    first="Label"
+                    second={this.state.label}
+                  />
+
+                  <TextContainer
+                    first="Hash"
+                    second={this.state.hash}
+                  />
+
+                  <TextContainer
+                    first="Address on IPFS"
+                    second={this.state.address}
+                    link={() => Linking.openURL(this.state.address)}
+                    style={{ color: 'blue', textDecorationLine: 'underline' }}
+                  />
+
+                  <TextContainer
+                    first="Transaction Hash"
+                    second={this.state.transactionHash}
+                  />
+
+                  <TextContainer
+                    first="Block Hash"
+                    second={this.state.blockHash}
+                  />
+
+                </View>
+              )
+          ) : null
+        }
+      </View>
+    )
+  }
   render() {
     return (
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container}
+        contentContainerStyle={{ flex: 1 }} >
+        <View >
+          <Header>
+            <Body>{
+              this.state.clickUpload ? (
+                <Title> DAPP images listing </Title>
+              )
+                : (
+                  <Title> New Image upload </Title>
+                )
+            }
+
+            </Body>
+            <Right>
+              <Button transparent onPress={() => this.setState({ clickUpload: !this.state.clickUpload })}>{
+                !this.state.clickUpload ?
+                  (<Text> HOME </Text>)
+                  : (<Text> ADD </Text>)
+              }
+              </Button>
+            </Right>
+          </Header>
+        </View>
         {
-          this.state.clickUpload ?
-            this.newUploadScreen()
+          !this.state.clickUpload ?
+            (
+              this.newUploadScreen()
+            )
             :
             (
               <ScrollView>
@@ -234,9 +263,6 @@ export default class App extends Component {
                     : (
                       <ScrollView style={{ flex: 1 }}>
                         <Fragment>
-                          <View style={{ alignItems: 'center' }}>
-                            <Text> DAPP images listing  </Text>
-                          </View>
                           {
                             this.state.images.map((data, index) => (
                               <Card
@@ -250,6 +276,7 @@ export default class App extends Component {
                               />
                             )
                             )}
+
                         </Fragment>
                       </ScrollView>
                     )
@@ -265,7 +292,6 @@ export default class App extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // marginTop: '30%',
     backgroundColor: '#F5FCFF',
   },
   avatarContainer: {
@@ -288,6 +314,5 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 10,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
-  }
-
+  },
 });
