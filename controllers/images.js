@@ -20,6 +20,7 @@ const Image = require('../models/images');
 
 const MAX_SIZE = 52428800;
 
+
 const storage = multer.diskStorage({
   destination(req, file, cb) {
     cb(null, path.join(__dirname, '../uploads'));
@@ -30,7 +31,7 @@ const storage = multer.diskStorage({
 });
 
 
-exports.upload = multer({ storage });
+exports.upload = multer({ storage, limits: { fieldSize: 25 * 1024 * 1024 } });
 
 exports.test = (req, res) => {
   res.send(' Up and running');
@@ -212,7 +213,6 @@ exports.findByLabel = async (req, res) => {
       res.send(resp);
     }
   } catch (err) {
-    winston.error(err.message);
     res.status(500).send(err.message);
   }
 };
