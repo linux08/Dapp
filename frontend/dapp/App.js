@@ -7,7 +7,7 @@
  */
 
 import React, { Component, Fragment } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, PixelRatio, Image, Linking, Dimensions, TextInput, ScrollView } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, PixelRatio, Image, Linking, Dimensions, TextInput, ScrollView, FlatList } from 'react-native';
 import ImagePicker from 'react-native-image-picker';
 import { Icon, Container, Header, Left, Button, Body, Title, Right } from 'native-base';
 
@@ -32,7 +32,9 @@ export default class App extends Component {
       avatarSource: null,
       loading: null,
       fetchLoading: true,
-      clickUpload: false
+      clickUpload: false,
+      uploadStatus: false,
+      label: ''
     };
   }
 
@@ -75,6 +77,7 @@ export default class App extends Component {
       } else {
         const source = { uri: response.uri };
         this.setState({
+          uploadStatus: true,
           avatarSource: source,
           uri: response.uri,
           type: response.type,
@@ -109,42 +112,46 @@ export default class App extends Component {
     this.setState({
       loading: true
     });
-    if (this.state.label === '') {
-      alert('Enter image label')
+    if (!this.state.uploadStatus) {
+      this.setState({ loading: null })
+      return alert('Image yet to be uploaded')
     }
-    data.append('label', this.state.label);
+    if (this.state.label === '') {
+      this.setState({ loading: null })
+      return alert('Enter image label')
+    }
+    else {
+      data.append('label', this.state.label);
+      const config = {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'multipart/form-data',
+        },
+        body: data,
+      };
 
-    const config = {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'multipart/form-data',
-      },
-      body: data,
-    };
-
-    fetch('http://10.0.2.2:5000/upload', config)
-      .then((resp) => resp.json())
-      .then((res) => {
-        console.log('ththt', this.state.images.length);
-        let image = this.state.images.concat(res)
-        console.log('new', this.state.images.length);
-        this.setState({
-          label: res.label,
-          hash: res.ipfsHash,
-          address: res.ipfsAddress,
-          transactionHash: res.transactionHash,
-          blockHash: res.blockHash,
-          loading: false,
-          image: this.state.images.concat(res)
+      fetch('http://10.0.2.2:5000/upload', config)
+        .then((resp) => resp.json())
+        .then((res) => {
+          this.setState((prevState) => ({
+            label: res.label,
+            hash: res.ipfsHash,
+            address: res.ipfsAddress,
+            transactionHash: res.transactionHash,
+            blockHash: res.blockHash,
+            loading: false,
+            images: prevState.images.concat(res),
+          }))
         })
-      })
-      .catch((err) => {
-        this.setState({
-          loading: false,
-          error: err.message
-        });
-      })
+        .catch((err) => {
+          this.setState({
+            loading: false,
+            error: err.message
+          });
+        })
+    }
+
   }
 
   newUploadScreen() {
@@ -226,7 +233,7 @@ export default class App extends Component {
         <View >
           <Header>
             <Body>{
-              this.state.clickUpload ? (
+              !this.state.clickUpload ? (
                 <Title> DAPP images listing </Title>
               )
                 : (
@@ -237,7 +244,7 @@ export default class App extends Component {
             </Body>
             <Right>
               <Button transparent onPress={() => this.setState({ clickUpload: !this.state.clickUpload })}>{
-                !this.state.clickUpload ?
+                !!this.state.clickUpload ?
                   (<Text> HOME </Text>)
                   : (<Text> ADD </Text>)
               }
@@ -246,13 +253,14 @@ export default class App extends Component {
           </Header>
         </View>
         {
-          !this.state.clickUpload ?
+          this.state.clickUpload ?
             (
               this.newUploadScreen()
             )
             :
             (
-              <ScrollView>
+              <ScrollView style={{ flex: 1 }}
+                contentContainerStyle={{ flex: 1 }}>
                 {
                   this.state.fetchLoading ?
                     (
@@ -261,22 +269,42 @@ export default class App extends Component {
                       </View>
                     )
                     : (
-                      <ScrollView style={{ flex: 1 }}>
+                      <ScrollView style={{ flex: 1 }}
+                        contentContainerStyle={{ flex: 1 }}
+                      >
                         <Fragment>
                           {
-                            this.state.images.map((data, index) => (
-                              <Card
-                                key={index}
-                                state={this.state}
-                                createdAt={data.createdAt}
-                                address={data.ipfsAddress}
-                                blockHash={data.blockHash}
-                                transactionHash={data.transactionHash}
-                                label={data.label}
-                              />
-                            )
-                            )}
+                            this.state.images.length === 0 ?
+                              (
+                                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                                  <TouchableOpacity onPress={() => this.setState({ clickUpload: !this.state.clickUpload })} style={[styles.label, { justifyContent: 'center', backgroundColor: '#8470ff' }]}>
+                                    <Text style={{ fontWeight: 'bold' }}>  ADD </Text>
+                                  </TouchableOpacity>
+                                </View>
+                              ) :
+                              (
+                                <FlatList
+                                  data={this.state.images}
+                                  extraData={this.state.images}
+                                  keyExtractor={(item, index) => index.toString()}
+                                  renderItem={(item, index) => {
 
+                                    return (
+                                      <Card
+                                        key={index}
+                                        state={this.state}
+                                        createdAt={item.item.createdAt}
+                                        address={item.item.ipfsAddress}
+                                        blockHash={item.item.blockHash}
+                                        transactionHash={item.item.transactionHash}
+                                        label={item.item.label}
+                                      />
+                                    )
+
+                                  }}
+                                />
+
+                              )}
                         </Fragment>
                       </ScrollView>
                     )
