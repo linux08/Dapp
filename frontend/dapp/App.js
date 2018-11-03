@@ -29,7 +29,32 @@ export default class App extends Component {
     this.state = {
       avatarSource: null,
       loading: null,
+      fetchLoading: true
     };
+  }
+
+  componentDidMount(){
+    const config = {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json'
+      },
+    };
+    fetch('http://10.0.2.2:5000/images', config)
+      .then((resp) => resp.json())
+      .then((res) => {
+        console.log('resp', resp);
+        this.setState({
+          images: resp,
+          fetchLoading: false
+        })
+      })
+      .catch((err) => {
+        this.setState({
+          fetchLoading: false,
+          error: err.message
+        });
+      })
   }
 
 
