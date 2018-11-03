@@ -1,10 +1,10 @@
-#Setting up 
+# Setting up 
 
 ## Ensure you have Node.js installed on your machine if not download
 
-##To get started
+## To get started
 * Install  Ganache globally
-        ```npm i -g ganache-cli``
+        ```npm i -g ganache-cli```
 
 * Download IPFS locally 
         ### How to Install IPFS
