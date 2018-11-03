@@ -7,7 +7,7 @@
         ```npm i -g ganache-cli```
 
 * Download IPFS locally 
-        ### How to Install IPFS
+     
         
 * Download IPFS => https://ipfs.io/docs/install/
 
