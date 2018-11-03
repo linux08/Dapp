@@ -6,11 +6,12 @@
  * @flow
  */
 
-import React, { Component } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, PixelRatio, Image, Linking, Dimensions, TextInput } from 'react-native';
+import React, { Component, Fragment } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View, PixelRatio, Image, Linking, Dimensions, TextInput, ScrollView } from 'react-native';
 import ImagePicker from 'react-native-image-picker';
 
 import Spinner from './components/Spinner';
+import Card from './components/Card';
 import TextContainer from './components/TextContainer';
 
 const options = {
@@ -29,11 +30,12 @@ export default class App extends Component {
     this.state = {
       avatarSource: null,
       loading: null,
-      fetchLoading: true
+      fetchLoading: true,
+      clickUpload: false
     };
   }
 
-  componentDidMount(){
+  componentDidMount() {
     const config = {
       method: 'GET',
       headers: {
@@ -43,13 +45,14 @@ export default class App extends Component {
     fetch('http://10.0.2.2:5000/images', config)
       .then((resp) => resp.json())
       .then((res) => {
-        console.log('resp', resp);
+        console.log('resp', res);
         this.setState({
-          images: resp,
+          images: res,
           fetchLoading: false
         })
       })
       .catch((err) => {
+        console.log('err', err.message)
         this.setState({
           fetchLoading: false,
           error: err.message
@@ -123,10 +126,11 @@ export default class App extends Component {
     fetch('http://10.0.2.2:5000/upload', config)
       .then((resp) => resp.json())
       .then((res) => {
-        console.log('resp', res);
+
         this.setState({
+          label: res.label,
           hash: res.ipfsHash,
-          address: `https://gateway.ipfs.io/ipfs/${res.ipfsHash}`,
+          address: res.ipfsAddress,
           transactionHash: res.transactionHash,
           blockHash: res.blockHash,
           loading: false
@@ -139,71 +143,121 @@ export default class App extends Component {
         });
       })
   }
+
+  newUploadScreen = () => (
+    <Fragment>
+      <View style={{ alignItems: 'center' }}>
+        <View>
+          <Text style={{ color: 'blue' }}>  DAPP file system using ethereum and IPFS </Text>
+        </View>
+        <View style={{ marginTop: '10%' }}>
+          <TouchableOpacity onPress={() => this.selectImage()}>
+            <View style={[styles.avatar, styles.avatarContainer, { marginBottom: 20 }]}>
+              {this.state.avatarSource === null ? <Text>Select a Photo</Text> :
+                <Image style={styles.avatar} source={this.state.avatarSource} />
+              }
+            </View>
+          </TouchableOpacity>
+
+          <View style={{ alignItems: 'center' }}>
+            <TextInput
+              placeholder="Label"
+              onChangeText={(label) => this.setState({ label })}
+              style={styles.label}
+              underlineColorAndroid="transparent"
+            />
+          </View>
+
+          <View style={{ alignItems: 'center', marginTop: '10%' }}>
+            <TouchableOpacity onPress={() => this.upload()} style={[styles.label, { justifyContent: 'center', backgroundColor: '#8470ff' }]}>
+              <Text style={{ fontWeight: 'bold' }}>  UPLOAD </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>{
+        this.state.loading !== null ? (
+          this.state.loading ? (
+            <Spinner size="large" />
+          ) : (
+              <View>
+
+                <TextContainer
+                  first="Label"
+                  second={this.state.label}
+                />
+
+                <TextContainer
+                  first="Hash"
+                  second={this.state.hash}
+                />
+
+                <TextContainer
+                  first="Address on IPFS"
+                  second={this.state.address}
+                  link={() => Linking.openURL(this.state.address)}
+                  style={{ color: 'blue', textDecorationLine: 'underline' }}
+                />
+
+                <TextContainer
+                  first="Transaction Hash"
+                  second={this.state.transactionHash}
+                />
+
+                <TextContainer
+                  first="Block Hash"
+                  second={this.state.blockHash}
+                />
+
+              </View>
+            )
+        ) : null
+      }
+    </Fragment>
+  )
+
   render() {
     return (
-      <View style={styles.container}>
-        <View style={{ alignItems: 'center' }}>
-          <View>
-            <Text style={{ color: 'blue' }}>  DAPP file system using ethereum and IPFS </Text>
-          </View>
-          <View style={{ marginTop: '10%' }}>
-            <TouchableOpacity onPress={() => this.selectImage()}>
-              <View style={[styles.avatar, styles.avatarContainer, { marginBottom: 20 }]}>
-                {this.state.avatarSource === null ? <Text>Select a Photo</Text> :
-                  <Image style={styles.avatar} source={this.state.avatarSource} />
+      <ScrollView style={styles.container}>
+        {
+          this.state.clickUpload ?
+            this.newUploadScreen()
+            :
+            (
+              <ScrollView>
+                {
+                  this.state.fetchLoading ?
+                    (
+                      <View style={{ flex: 1, marginTop: '40%' }}>
+                        <Spinner size='large' />
+                      </View>
+                    )
+                    : (
+                      <ScrollView style={{ flex: 1 }}>
+                        <Fragment>
+                          <View style={{ alignItems: 'center' }}>
+                            <Text> DAPP images listing  </Text>
+                          </View>
+                          {
+                            this.state.images.map((data, index) => (
+                              <Card
+                                key={index}
+                                state={this.state}
+                                createdAt={data.createdAt}
+                                address={data.ipfsAddress}
+                                blockHash={data.blockHash}
+                                transactionHash={data.transactionHash}
+                                label={data.label}
+                              />
+                            )
+                            )}
+                        </Fragment>
+                      </ScrollView>
+                    )
                 }
-              </View>
-            </TouchableOpacity>
-
-            <View style={{ alignItems: 'center' }}>
-              <TextInput
-                placeholder="Label"
-                onChangeText={(label) => this.setState({ label })}
-                style={styles.label}
-                underlineColorAndroid="transparent"
-              />
-            </View>
-
-            <View style={{ alignItems: 'center', marginTop: '10%' }}>
-              <TouchableOpacity onPress={() => this.upload()} style={[styles.label, { justifyContent: 'center', backgroundColor: '#8470ff' }]}>
-                <Text style={{ fontWeight: 'bold' }}>  UPLOAD </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>{
-          this.state.loading !== null ? (
-            this.state.loading ? (
-              <Spinner size="large" />
-            ) : (
-                <View>
-
-                  <TextContainer
-                    first="Hash"
-                    second={this.state.hash}
-                  />
-
-                  <TextContainer
-                    first="Address on IPFS"
-                    second={this.state.address}
-                    link={() => Linking.openURL(this.state.address)}
-                    style={{ color: 'blue', textDecorationLine: 'underline' }}
-                  />
-
-                  <TextContainer
-                    first="Transaction Hash"
-                    second={this.state.transactionHash}
-                  />
-
-                  <TextContainer
-                    first="Block Hash"
-                    second={this.state.blockHash}
-                  />
-
-                </View>
-              )
-          ) : null
+              </ScrollView>
+            )
         }
-      </View>
+      </ScrollView>
     );
   }
 }
@@ -211,7 +265,7 @@ export default class App extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: '30%',
+    // marginTop: '30%',
     backgroundColor: '#F5FCFF',
   },
   avatarContainer: {
