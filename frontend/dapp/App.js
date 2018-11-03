@@ -36,8 +36,8 @@ export default class App extends Component {
 
   selectImage = async () => {
 
-    ImagePicker.showImagePicker(options, (response) => {
-    
+    ImagePicker.showImagePicker(options, async (response) => {
+
       if (response.didCancel) {
         this.setState({ error: 'Image upload failed', loading: null });
       } else if (response.error) {
@@ -50,30 +50,20 @@ export default class App extends Component {
           avatarSource: source,
           uri: response.uri,
           type: response.type,
-          name : response.fileName,
+          name: response.fileName,
           originalName: response.fileName
         });
-       
 
-      }
-    })
-  }
 
-  upload = async () => {
-      this.setState({
-        loading: true
-      });
-      console.log('this.state', this.state);
-     const data = new FormData();
+        global.data = new FormData();
+
         data.append('file', {
-          uri: this.state.uri,
-          type: this.state.type,
-          name: this.state.fileName,
-          originalname: this.state.fileName,
+          uri: response.uri,
+          type: response.type,
+          name: response.fileName,
+          originalname: response.fileName,
         });
-        data.append('label', {
-          label: this.state.label
-        });
+
 
         const config = {
           method: 'POST',
@@ -83,26 +73,46 @@ export default class App extends Component {
           },
           body: data,
         };
+      }
+    })
+  }
 
-        fetch('http://10.0.2.2:5000/upload', config)
-          .then((resp) => resp.json())
-          .then((res) => {
-            console.log('resp', res);
-            this.setState({
-              hash: res.ipfsHash,
-              address: `https://gateway.ipfs.io/ipfs/${res.ipfsHash}`,
-              transactionHash: res.transactionHash,
-              blockHash: res.blockHash,
-              loading: false
-            })
-          })
-          .catch((err) => {
-            this.setState({
-              loading:false,
-              error: err.message
-            });
-            console.log('err', err.message)
-          })
+  upload = async () => {
+    this.setState({
+      loading: true
+    });
+    if (this.state.label === '') {
+      alert('Enter image label')
+    }
+    data.append('label', this.state.label);
+
+    const config = {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'multipart/form-data',
+      },
+      body: data,
+    };
+
+    fetch('http://10.0.2.2:5000/upload', config)
+      .then((resp) => resp.json())
+      .then((res) => {
+        console.log('resp', res);
+        this.setState({
+          hash: res.ipfsHash,
+          address: `https://gateway.ipfs.io/ipfs/${res.ipfsHash}`,
+          transactionHash: res.transactionHash,
+          blockHash: res.blockHash,
+          loading: false
+        })
+      })
+      .catch((err) => {
+        this.setState({
+          loading: false,
+          error: err.message
+        });
+      })
   }
   render() {
     return (
@@ -130,8 +140,8 @@ export default class App extends Component {
             </View>
 
             <View style={{ alignItems: 'center', marginTop: '10%' }}>
-              <TouchableOpacity  onPress ={() => this.upload() }style ={[styles.label, { justifyContent: 'center', backgroundColor: '#8470ff'}]}>
-                <Text style ={{ fontWeight: 'bold'}}>  UPLOAD </Text>
+              <TouchableOpacity onPress={() => this.upload()} style={[styles.label, { justifyContent: 'center', backgroundColor: '#8470ff' }]}>
+                <Text style={{ fontWeight: 'bold' }}>  UPLOAD </Text>
               </TouchableOpacity>
             </View>
           </View>
