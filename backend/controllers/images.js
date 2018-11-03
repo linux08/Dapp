@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
 });
 
 
-exports.upload = multer({ storage ,  limits: { fieldSize: 25 * 1024 * 1024 }});
+exports.upload = multer({ storage, limits: { fieldSize: 25 * 1024 * 1024 } });
 
 exports.test = (req, res) => {
     res.send(' Up and running');
@@ -213,7 +213,6 @@ exports.findByLabel = async (req, res) => {
             res.send(resp);
         }
     } catch (err) {
-        winston.error(err.message);
         res.status(500).send(err.message);
     }
 };
