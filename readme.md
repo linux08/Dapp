@@ -1,5 +1,5 @@
 
-Link to article [here] (https://blog.usejournal.com/build-a-decentralized-react-native-application-9897b5d88641)
+Link to article: [here](https://blog.usejournal.com/build-a-decentralized-react-native-application-9897b5d88641)
 
 # Setting up 
 
