@@ -1,4 +1,9 @@
+
+Link to article [here] (https://blog.usejournal.com/build-a-decentralized-react-native-application-9897b5d88641)
+
 # Setting up 
+
+
 
 ## Ensure you have Node.js installed on your machine if not download
 
